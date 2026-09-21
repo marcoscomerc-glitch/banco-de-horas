@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B3C9C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Banco Matheus">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Banco de Horas · Matheus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F1F4FA; --panel:#FFFFFF; --ink:#0B1B3A; --muted:#55627D; --line:#D6DDEB; --soft:#E6ECF7;
+  --accent:#0B3C9C; --accent-soft:#DCE6FA;
+  --credit:#0E7A4F; --credit-soft:#DDF2E8; --debit:#C62D2D; --debit-soft:#FBE3E3;
+  --warn:#9A6400; --warn-soft:#FBEFD6; --pace:#B7700A;
+  --band:#0B3C9C; --band-ink:#FFFFFF; --band-muted:#C9D7F5;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#060F24; --panel:#0C1A38; --ink:#E7EDFA; --muted:#93A2C2; --line:#1F2F55; --soft:#132449;
+  --accent:#7EA6FF; --accent-soft:#16295A;
+  --credit:#4FD1A0; --credit-soft:#0F3329; --debit:#FF8A80; --debit-soft:#3A1818;
+  --warn:#E9B45A; --warn-soft:#352812; --pace:#F0B04A;
+  --band:#0A2F7A; --band-ink:#FFFFFF; --band-muted:#AFC3F0;
+}}
+:root[data-theme="dark"]{
+  --bg:#060F24; --panel:#0C1A38; --ink:#E7EDFA; --muted:#93A2C2; --line:#1F2F55; --soft:#132449;
+  --accent:#7EA6FF; --accent-soft:#16295A;
+  --credit:#4FD1A0; --credit-soft:#0F3329; --debit:#FF8A80; --debit-soft:#3A1818;
+  --warn:#E9B45A; --warn-soft:#352812; --pace:#F0B04A;
+  --band:#0A2F7A; --band-ink:#FFFFFF; --band-muted:#AFC3F0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(48px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+.wrap>*,.row>*{min-width:0}
+header{position:relative;overflow:hidden;background:var(--band);color:var(--band-ink);border-radius:12px;padding:22px 22px 18px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-stretch:80%;font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header .sub{color:var(--band-muted)}
+header .save{color:var(--band-muted)}
+header .save i{background:#fff}
+.stars{position:absolute;right:-6px;top:-10px;width:230px;height:170px;opacity:.9;pointer-events:none}
+header>*{position:relative;z-index:1}
+.tabs button{background:transparent;color:var(--band-ink);border-color:rgba(255,255,255,.4)}
+.tabs button[aria-pressed="true"]{background:#fff!important;color:var(--band)!important;border-color:#fff!important}
+.sub{color:var(--muted);margin:6px 0 0;font-size:14px}
+.save{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
+.save i{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block}
+.save.busy i{background:var(--warn)} .save.local i{background:var(--muted)}
+.pos{color:var(--credit)} .neg{color:var(--debit)} .zero{color:var(--accent)}
+
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button,.months button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:5px 14px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.summary{display:grid;grid-template-columns:1.3fr repeat(3,1fr);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kpi{padding:16px 18px;border-left:1px solid var(--line);display:grid;gap:2px;align-content:start}
+.kpi:first-child{border-left:0}
+.kpi .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpi .val{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:24px;font-weight:600;line-height:1.2}
+.kpi.main .val{font-size:44px;font-family:var(--display);font-stretch:85%;font-weight:800}
+.kpi .note{font-size:13px;color:var(--muted)}
+@media (max-width:780px){.summary{grid-template-columns:1fr 1fr}.kpi.main{grid-column:1/-1;border-bottom:1px solid var(--line)}.kpi:nth-child(2){border-left:0}.kpi:nth-child(4){border-left:0;border-top:1px solid var(--line)}.kpi:nth-child(3){border-left:1px solid var(--line)}}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h2{font-family:var(--display);font-stretch:85%;font-size:18px;font-weight:700;margin:0 0 4px}
+.card .hint{color:var(--muted);font-size:13px;margin:0 0 10px;max-width:75ch}
+.chart{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:0;border-top:2.5px solid var(--accent)}
+.sw.pace{border-top:2.5px dashed var(--pace)} .sw.plan{border-top:2.5px dashed var(--muted)}
+
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--sans)}
+tr.sel td{background:var(--accent-soft)}
+tr.total td{font-weight:600;border-bottom:0}
+.mlink{font:inherit;font-weight:600;color:var(--ink);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.bar{display:inline-block;position:relative;width:90px;height:8px;background:var(--soft);border-radius:4px;vertical-align:middle;margin-left:8px}
+.bar i{position:absolute;top:0;height:8px;border-radius:4px}
+.bar b{position:absolute;left:50%;top:-2px;width:1px;height:12px;background:var(--muted)}
+
+.monthhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.months{display:flex;flex-wrap:wrap;gap:6px}
+.months button[aria-pressed="true"]{background:var(--accent);color:var(--panel);border-color:var(--accent)}
+.days{display:grid;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.row{display:grid;grid-template-columns:104px 128px repeat(4,minmax(76px,1fr)) minmax(190px,1.6fr);gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}
+.row.head{border-top:0;background:var(--soft);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row.today{background:linear-gradient(90deg,var(--accent-soft),transparent 60%)}
+.row.off{background:var(--soft);color:var(--muted)}
+.date b{font-family:var(--mono);font-weight:600}
+.date small{display:block;color:var(--muted);font-size:12px}
+.date .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-left:6px}
+select,input[type=time],input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;width:100%;min-width:0}
+input[type=time]{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:14px}
+input:disabled{opacity:.3}
+.status{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.status input{width:90px;font-family:var(--mono)}
+.chip{display:inline-flex;align-items:center;border-radius:999px;padding:2px 10px;font-weight:600;font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.chip.c{background:var(--credit-soft);color:var(--credit)} .chip.d{background:var(--debit-soft);color:var(--debit)}
+.chip.t{background:var(--soft);color:var(--muted)} .chip.m{background:var(--accent-soft);color:var(--accent)} .chip.w{background:var(--warn-soft);color:var(--warn)}
+.x{color:var(--muted);font-size:12.5px} .x b{font-family:var(--mono);color:var(--ink)}
+.lbl-m{display:none}
+.slot{min-height:1px}
+@media (max-width:780px){
+  .row.head{display:none}
+  .row{grid-template-columns:1fr 1fr;gap:8px 10px;padding:12px}
+  .row .status{grid-column:1/-1}
+  .row .slot:empty{display:none}
+  .lbl-m{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:2px}
+}
+.settings{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:end}
+.settings label{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.settings input{width:130px}
+.rules{margin:0;padding-left:18px;color:var(--muted);font-size:13.5px;max-width:75ch;display:grid;gap:4px}
+.rules b{color:var(--ink);font-weight:600}
+
+.nav{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}
+.nav select{width:auto;background:rgba(255,255,255,.12);color:var(--band-ink);border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 12px;font-weight:600}
+.nav select option{color:#0B1B3A;background:#fff}
+.navbtn{font:inherit;font-weight:700;min-width:36px;height:34px;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:transparent;color:var(--band-ink);cursor:pointer;padding:0 12px}
+.navbtn:hover{background:rgba(255,255,255,.14)}
+.navbtn.hoje{background:#fff;color:var(--band);border-color:#fff}
+.navbtn:disabled{opacity:.35;cursor:default}
+.cyclabel{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--band-muted);font-weight:600;text-align:right}
+.nav select:focus-visible,.navbtn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+tr.fech td{background:var(--soft);font-size:12.5px;color:var(--muted)}
+tr.fech td b{color:var(--ink)}
+tr.off td{color:var(--muted)}
+.cytag{display:inline-block;font-family:var(--sans);font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px;margin-left:6px}
+.yearhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px}
+@media (max-width:780px){.nav{justify-content:flex-start}.cyclabel{text-align:left}}
+
+.quick{display:grid;gap:12px}
+.quick .top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px}
+.punches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.punches.sat{grid-template-columns:repeat(2,1fr)}
+.pch{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:2px;background:var(--bg)}
+.pch span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pch b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:20px;font-weight:600}
+.pch.next{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.pch.empty b{color:var(--muted);opacity:.5}
+.qactions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:inherit;font-weight:600;border-radius:10px;padding:12px 18px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;min-height:44px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--panel);font-size:16px;flex:1 1 220px}
+.btn:disabled{opacity:.45;cursor:default}
+.qstatus{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px}
+.backup{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+@media (max-width:520px){.punches{grid-template-columns:repeat(2,1fr)}.stars{width:140px;height:104px;opacity:.3}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="stars" viewBox="0 0 230 170" aria-hidden="true">
+      <defs>
+        <path id="st" d="M0,-10 L2.9,-3.1 L9.5,-3.1 L4.2,1.2 L6.2,8.1 L0,4 L-6.2,8.1 L-4.2,1.2 L-9.5,-3.1 L-2.9,-3.1Z"/>
+      </defs>
+      <g fill="#FFFFFF" fill-opacity=".92">
+        <use href="#st" transform="translate(150,34) scale(1.35)"/>
+        <use href="#st" transform="translate(112,78) scale(1.15)"/>
+        <use href="#st" transform="translate(192,86) scale(1.25)"/>
+        <use href="#st" transform="translate(156,132) scale(1.5)"/>
+        <use href="#st" transform="translate(170,100) scale(.6)"/>
+      </g>
+    </svg>
+    <div>
+      <h1 id="title">Matheus · Set 2026 – Fev 2027</h1>
+      <p class="sub" id="subtitle">Ciclo de 6 meses · fecha em 31/03/2027 · seg–sex 8h · sáb 4h</p>
+    </div>
+    <div style="display:grid;gap:8px;justify-items:end">
+      <div class="nav" role="group" aria-label="Escolher mês">
+        <button type="button" class="navbtn" id="navPrev" aria-label="Mês anterior">‹</button>
+        <select id="selMes" aria-label="Mês"></select>
+        <select id="selAno" aria-label="Ano"></select>
+        <button type="button" class="navbtn" id="navNext" aria-label="Próximo mês">›</button>
+        <button type="button" class="navbtn hoje" id="navHoje">Hoje</button>
+      </div>
+      <div class="cyclabel" id="cyLabel"></div>
+      <div class="save" id="save"><i></i><span id="saveTxt">Carregando…</span></div>
+    </div>
+  </header>
+
+  <section class="card quick" id="quick" aria-label="Bater ponto hoje">
+    <div class="top"><h2 id="qTitle">Hoje</h2><span class="x" id="qNote"></span></div>
+    <div class="punches" id="qPunches"></div>
+    <div class="qstatus" id="qStatus"></div>
+    <div class="qactions">
+      <button type="button" class="btn primary" id="qPunch">Bater ponto agora</button>
+      <button type="button" class="btn" id="qUndo">Desfazer última</button>
+    </div>
+  </section>
+
+  <section class="summary" aria-label="Resumo do ciclo">
+    <div class="kpi main"><span class="lbl">Saldo do ciclo</span><span class="val" id="kSaldo">0:00</span><span class="note" id="kSaldoNote">—</span></div>
+    <div class="kpi"><span class="lbl">No ritmo atual, fecha em</span><span class="val" id="kProj">—</span><span class="note" id="kProjNote">—</span></div>
+    <div class="kpi"><span class="lbl" id="kAjusteLbl">Para chegar na meta</span><span class="val" id="kAjuste">—</span><span class="note" id="kAjusteNote">—</span></div>
+    <div class="kpi"><span class="lbl">Até o fechamento</span><span class="val" id="kDias">—</span><span class="note" id="kDiasNote">—</span></div>
+  </section>
+
+  <section class="card" id="planCard">
+    <div class="yearhead"><h2 id="planTitle">Plano dia a dia</h2><span class="x" id="planNote"></span></div>
+    <p class="hint" id="planHint"></p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Dia</th><th>Meta do dia</th><th>Entrada</th><th>Sair às</th><th>Resultado</th><th>Saldo depois do dia</th></tr></thead>
+        <tbody id="pbody"></tbody>
+      </table>
+    </div>
+    <p class="hint" style="margin:8px 0 0">Sem entrada batida, o horário de saída considera entrada às 08:00 e almoço de <span id="almTxt">1:30</span>. Quando ele bate o ponto, o cálculo usa os horários reais e redistribui o que faltar nos dias seguintes.</p>
+  </section>
+
+  <section class="card">
+    <h2>Projeção até o fechamento</h2>
+    <p class="hint" id="chartHint">Linha cheia: saldo real. Laranja: para onde vai se você seguir no ritmo dos últimos dias. Cinza: o caminho até a meta.</p>
+    <svg class="chart" id="chart" viewBox="0 0 960 260" role="img" aria-label="Saldo acumulado do ciclo e projeção até o fechamento"></svg>
+    <div class="legend"><span><i class="sw"></i>Realizado</span><span><i class="sw pace"></i>Ritmo atual</span><span><i class="sw plan"></i>Caminho até a meta</span></div>
+  </section>
+
+  <section class="card">
+    <div class="yearhead"><h2 id="yearTitle">Ano 2026</h2><span class="x" id="yearNote"></span></div>
+    <p class="hint">Os 12 meses do ano escolhido, mesmo quando passam por dois ciclos. Clique no mês para abrir os dias dele.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Mês</th><th>Crédito</th><th>Débito</th><th>Saldo do mês</th><th>Saldo do ciclo</th><th>Faltas</th></tr></thead>
+        <tbody id="ybody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Mês a mês do ciclo</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Mês</th><th>Dias lançados</th><th>Crédito</th><th>Débito</th><th>Saldo do mês</th><th>Acumulado</th><th>Faltas*</th></tr></thead>
+        <tbody id="mbody"></tbody>
+      </table>
+    </div>
+    <p class="hint" style="margin:8px 0 0">* Faltas não entram no banco. Elas são descontadas na folha, e aparecem em H. Falt. no cartão.</p>
+  </section>
+
+  <section class="card">
+    <div class="monthhead">
+      <h2 id="monthTitle">Outubro 2026</h2>
+      <div class="months" id="months" role="group" aria-label="Mês"></div>
+    </div>
+    <div class="days" id="days"></div>
+  </section>
+
+  <section class="card">
+    <h2>Ajustes</h2>
+    <p class="hint">Valem para o ciclo selecionado. A meta é o saldo que você quer ter no fechamento. Deixe 0:00 para zerar.</p>
+    <div class="settings">
+      <label for="meta">Meta de saldo (h:mm)<input id="meta" type="text" inputmode="numeric" value="0:00"></label>
+      <label for="prazo">Até o dia<input id="prazo" type="date"></label>
+      <label for="inicial">Saldo inicial do ciclo<input id="inicial" type="text" inputmode="numeric" value="0:00"></label>
+      <label for="tol">Tolerância diária (min)<input id="tol" type="number" min="0" max="10" value="5"></label>
+      <label for="alm">Almoço padrão (h:mm)<input id="alm" type="text" inputmode="numeric" value="1:30"></label>
+      <label for="inicio">Início do banco<input id="inicio" type="month" value="2026-04"></label>
+    </div>
+    <p class="hint" style="margin:16px 0 0">Os lançamentos ficam só neste aparelho. Faça um backup de vez em quando, principalmente antes de trocar de celular.</p>
+    <div class="backup">
+      <button type="button" class="btn" id="bkExport">Exportar backup</button>
+      <button type="button" class="btn" id="bkImport">Importar backup</button>
+      <input type="file" id="bkFile" accept="application/json,.json" hidden>
+      <button type="button" class="btn" id="btnInstall" hidden>Instalar app</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Como a conta é feita</h2>
+    <ul class="rules">
+      <li>Um dia útil só conta quando as 4 batidas estão preenchidas (2 no sábado). Diferenças de até <b id="tolTxt">5 min</b> no dia são ignoradas, como no seu cartão.</li>
+      <li><b>Folga</b> tira a jornada inteira do banco. <b>Falta</b> não mexe no banco, porque vai para a folha. <b>Feriado</b>, <b>DSR</b> e <b>Abonado</b> valem 0. Use <b>Ajuste</b> para lançar um valor que o sistema mostrar (ex.: −0:41 num dia de treinamento).</li>
+      <li><b>Ritmo atual</b> é a média dos últimos 20 dias úteis lançados, repetida nos dias que faltam. Folgas já marcadas no futuro entram na conta.</li>
+      <li><b>Para chegar na meta</b> reparte a diferença entre os dias úteis até o prazo escolhido (ou até o fechamento, sem prazo). Quando a diferença é pequena, concentra em poucos dias para cada um passar da tolerância.</li>
+      <li>Depois da saída do almoço, a linha do dia sugere a hora de voltar pelo almoço padrão (1h30, como na tabela) e a saída do dia. Também mostra a volta mais cedo possível, respeitando o intervalo mínimo de 1h.</li>
+      <li>Feriados nacionais já vêm marcados. Se você trabalhar num deles, mude o tipo do dia para Trabalho.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function(){
+  const MES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const MES3=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const DOWL=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+  const DOW1=["D","S","T","Q","Q","S","S"];
+  const HOL=(function(){const o={};const fx=[["01-01","Confraternização"],["04-21","Tiradentes"],["05-01","Dia do Trabalho"],["09-07","Independência"],["10-12","N. Sra. Aparecida"],["11-02","Finados"],["11-15","Proclamação da República"],["11-20","Consciência Negra"],["12-25","Natal"]];
+    for(let y=2026;y<=2032;y++){fx.forEach(([md,n])=>o[y+"-"+md]=n);
+      const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+      const gf=new Date(y,mo-1,da-2); o[gf.getFullYear()+"-"+String(gf.getMonth()+1).padStart(2,"0")+"-"+String(gf.getDate()).padStart(2,"0")]="Sexta-feira Santa";}
+    return o;})();
+  function makeCycles(ini){const [y,m]=(ini||"2026-09").split("-").map(Number);const out=[];for(let k=0;k<10;k++){const d=new Date(y,m-1+6*k,1);out.push({id:d.getFullYear()+"-"+pad(d.getMonth()+1),y:d.getFullYear(),m:d.getMonth()});}return out;}
+
+  const pad=n=>String(n).padStart(2,"0");
+  let CYCLES=makeCycles("2026-04");
+  const keyOf=dt=>dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());
+  const now=new Date(); const todayKey=keyOf(now);
+  const $=id=>document.getElementById(id);
+  const toMin=t=>{if(!t)return null;const m=/^(\d{1,2}):(\d{2})$/.exec(t);return m?(+m[1])*60+(+m[2]):null};
+  const hm=m=>{const a=Math.abs(Math.round(m));return Math.floor(a/60)+":"+pad(a%60)};
+  const sg=m=>(m>0?"+":m<0?"−":"")+hm(m);
+  const clock=m=>{m=((Math.round(m)%1440)+1440)%1440;return pad(Math.floor(m/60))+":"+pad(m%60)};
+  const cls=m=>m>0?"pos":m<0?"neg":"zero";
+  const parseHM=s=>{s=String(s||"").trim().replace("−","-");if(!s)return null;const neg=s.startsWith("-");s=s.replace(/^[+-]/,"");let m=/^(\d+):(\d{1,2})$/.exec(s),v;if(m)v=(+m[1])*60+(+m[2]);else if(/^\d+$/.test(s))v=+s;else return null;return neg?-v:v};
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  function cycleInfo(c){
+    const start=new Date(c.y,c.m,1), end=new Date(c.y,c.m+6,0);
+    const months=[]; for(let i=0;i<6;i++){const d=new Date(c.y,c.m+i,1);months.push({y:d.getFullYear(),m:d.getMonth(),key:d.getFullYear()+"-"+pad(d.getMonth()+1)});}
+    const days=[]; for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){const w=d.getDay();days.push({key:keyOf(d),y:d.getFullYear(),m:d.getMonth(),d:d.getDate(),w,mkey:d.getFullYear()+"-"+pad(d.getMonth()+1)});}
+    const label=MES3[c.m][0].toUpperCase()+MES3[c.m].slice(1)+" "+c.y+" – "+MES3[end.getMonth()][0].toUpperCase()+MES3[end.getMonth()].slice(1)+" "+end.getFullYear();
+    return{start,end,startKey:keyOf(start),endKey:keyOf(end),months,days,label};
+  }
+  let cyIdx=CYCLES.findIndex(c=>{const ci=cycleInfo(c);return todayKey>=ci.startKey&&todayKey<=ci.endKey}); if(cyIdx<0)cyIdx=0;
+  let CI=cycleInfo(CYCLES[cyIdx]);
+  let selMonth=(CI.months.find(mo=>todayKey.startsWith(mo.key))||CI.months[0]).key;
+
+  const blank=()=>({inicial:0,meta:0,days:{}});
+  const SEED={};
+  const seedFor=id=>SEED[id]?JSON.parse(JSON.stringify(SEED[id])):null;
+
+  let cfg={tol:5,alm:90,inicio:"2026-04"}; let cyc=blank();
+  let db=null, cycRef=null, cfgRef=null, unsub=null, timers={}, busy={}, serverSeen=false;
+
+  const J=w=>w===0?0:(w===6?240:480);
+  const tipoDefault=day=>day.w===0?"dsr":(HOL[day.key]?"feriado":"trab");
+  const covered=(day,data=cyc)=>!!(data.desde&&day.key<data.desde);
+  const tipoOf=(day,data=cyc)=>(data.days[day.key]&&data.days[day.key].tipo)||tipoDefault(day);
+
+  function evalDay(day,data=cyc){
+    if(covered(day,data))return{t:"coberto",complete:true,delta:0,falta:0};
+    const t=tipoOf(day,data), v=data.days[day.key]||{}, j=J(day.w);
+    if(t==="dsr"||t==="feriado"||t==="abon")return{t,complete:true,delta:0,falta:0};
+    if(t==="folga")return{t,complete:true,delta:-j,falta:0};
+    if(t==="falta")return{t,complete:true,delta:0,falta:j};
+    if(t==="ajuste"){const a=parseHM(v.aj);return{t,complete:a!=null,delta:a||0,falta:0};}
+    const e1=toMin(v.e1),s1=toMin(v.s1),e2=toMin(v.e2),s2=toMin(v.s2), sat=day.w===6;
+    let worked=0; if(e1!=null&&s1!=null)worked+=s1-e1; if(!sat&&e2!=null&&s2!=null)worked+=s2-e2;
+    const complete=sat?(e1!=null&&s1!=null):(e1!=null&&s1!=null&&e2!=null&&s2!=null);
+    const raw=worked-j, delta=Math.abs(raw)<=cfg.tol?0:raw;
+    return{t,complete,worked,raw,delta,falta:0,e1,s1,e2,s2,sat,j};
+  }
+
+  function compute(){
+    const ev={}; CI.days.forEach(d=>ev[d.key]=evalDay(d));
+    let saldo=cyc.inicial;
+    CI.days.forEach(d=>{const e=ev[d.key]; if(e.complete&&!(e.t==="trab"&&false))saldo+=e.delta;});
+    // "from" date for remaining days
+    const fromKey=todayKey>CI.startKey?todayKey:CI.startKey;
+    const future=CI.days.filter(d=>d.key>=fromKey);
+    const remAll=future.filter(d=>{const e=ev[d.key];return e.t==="trab"&&!e.complete&&J(d.w)>0});
+    const prazo=(cyc.prazo&&cyc.prazo>=fromKey&&cyc.prazo<=CI.endKey)?cyc.prazo:null;
+    const rem=prazo?remAll.filter(d=>d.key<=prazo):remAll;
+    const pastMissing=CI.days.filter(d=>d.key<fromKey&&ev[d.key].t==="trab"&&!ev[d.key].complete&&J(d.w)>0).length;
+    // pace: last 20 completed trab days
+    const doneTrab=CI.days.filter(d=>ev[d.key].t==="trab"&&ev[d.key].complete&&J(d.w)>0);
+    const last=doneTrab.slice(-20); const pace=last.length?last.reduce((a,d)=>a+ev[d.key].delta,0)/last.length:0;
+    const proj=saldo+pace*remAll.length;
+    // plan
+    const need=saldo-cyc.meta; const plan={}; let within=false, nUsed=0;
+    if(rem.length&&need!==0){
+      if(Math.abs(need)<=cfg.tol)within=true;
+      else{
+        let n=rem.length; while(n>1&&Math.abs(need)/n<=cfg.tol+0.5)n--;
+        const use=rem.slice(0,n), sJ=use.reduce((a,d)=>a+J(d.w),0); let acc=0;
+        use.forEach((d,k)=>{const s=k===use.length-1?need-acc:Math.round(need*J(d.w)/sJ);acc+=s;plan[d.key]=s;}); nUsed=n;
+      }
+    }
+    // month aggregates
+    const months=CI.months.map(mo=>{
+      let cr=0,db=0,falta=0,launched=0,total=0;
+      CI.days.filter(d=>d.mkey===mo.key).forEach(d=>{const e=ev[d.key]; if(J(d.w)>0&&!["dsr","feriado","coberto"].includes(e.t)){total++; if(e.complete)launched++;} if(e.complete){if(e.delta>0)cr+=e.delta;else db-=e.delta;} falta+=e.falta;});
+      return{...mo,cr,db,saldo:cr-db,falta,launched,total};
+    });
+    let acc=cyc.inicial; months.forEach(mo=>{acc+=mo.saldo;mo.acc=acc;});
+    return{ev,saldo,rem,remAll,prazo,future,fromKey,pace,paceN:last.length,proj,need,plan,within,nUsed,months,pastMissing};
+  }
+
+  // ---------- UI build ----------
+  function allMonthKeys(){const out=[];CYCLES.forEach(c=>cycleInfo(c).months.forEach(m=>out.push(m.key)));return out;}
+  function buildTabs(){
+    const keys=allMonthKeys(), [sy,sm]=selMonth.split("-").map(Number);
+    const years=[...new Set(keys.map(k=>+k.slice(0,4)))];
+    $("selAno").innerHTML=years.map(y=>`<option value="${y}" ${y===sy?"selected":""}>${y}</option>`).join("");
+    $("selMes").innerHTML=MES.map((n,i)=>{const k=sy+"-"+pad(i+1);return `<option value="${i+1}" ${i+1===sm?"selected":""} ${keys.includes(k)?"":"disabled"}>${n}</option>`}).join("");
+    const idx=keys.indexOf(selMonth); $("navPrev").disabled=idx<=0; $("navNext").disabled=idx>=keys.length-1;
+    $("navHoje").disabled=selMonth===todayKey.slice(0,7)||!keys.includes(todayKey.slice(0,7));
+    const n=CYCLES.findIndex(c=>c.id===CYCLES[cyIdx].id)+1;
+    $("cyLabel").textContent=`${n}º ciclo · ${CI.label} · fecha em ${pad(CI.end.getDate())}/${pad(CI.end.getMonth()+1)}/${CI.end.getFullYear()}`;
+  }
+  function goTo(mkey){
+    const keys=allMonthKeys(); if(!keys.includes(mkey)){ if(mkey<keys[0])mkey=keys[0]; else mkey=keys[keys.length-1]; }
+    const i=CYCLES.findIndex(c=>cycleInfo(c).months.some(m=>m.key===mkey));
+    selMonth=mkey;
+    if(i!==cyIdx){cyIdx=i;loadCycle();}
+    else{buildTabs();buildMonths();buildDays();render();}
+  }
+  function buildMonths(){
+    $("months").innerHTML=CI.months.map(mo=>`<button type="button" id="mo-${mo.key}" aria-pressed="${mo.key===selMonth}">${MES3[mo.m]}</button>`).join("");
+    const mo=CI.months.find(x=>x.key===selMonth); $("monthTitle").textContent=MES[mo.m]+" "+mo.y;
+    buildTabs();
+  }
+  function buildDays(){
+    const el=$("days");
+    let h=`<div class="row head"><span>Dia</span><span>Tipo</span><span>Entrada</span><span>Saída</span><span>Volta</span><span>Saída</span><span>Resultado / meta</span></div>`;
+    CI.days.filter(d=>d.mkey===selMonth).forEach(d=>{
+      const k=d.key, sat=d.w===6, sun=d.w===0;
+      const opts=[["trab","Trabalho"],["folga","Folga"],["falta","Falta"],["feriado","Feriado"],["abon","Abonado"],["ajuste","Ajuste (±h:mm)"],["dsr","DSR"]];
+      const f=(p,lab)=>`<div class="slot"><span class="lbl-m">${lab}</span><input type="time" id="${p}-${k}" aria-label="${lab} ${pad(d.d)}/${pad(d.m+1)}"></div>`;
+      h+=`<div class="row" id="row-${k}">
+        <div class="date"><b>${pad(d.d)}/${pad(d.m+1)}</b>${k===todayKey?'<span class="tag">hoje</span>':""}<small>${DOWL[d.w]}${HOL[k]?" · "+esc(HOL[k]):""}</small></div>
+        <div><span class="lbl-m">Tipo</span><select id="t-${k}" aria-label="Tipo do dia ${pad(d.d)}/${pad(d.m+1)}">${opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join("")}</select></div>
+        ${f("e1","Entrada")}${f("s1","Saída")}
+        ${sat?'<div class="slot"></div><div class="slot"></div>':f("e2","Volta almoço")+f("s2","Saída")}
+        <div class="status"><input type="text" id="aj-${k}" placeholder="−0:41" aria-label="Valor do ajuste" hidden><span id="st-${k}"></span></div>
+      </div>`;
+    });
+    el.innerHTML=h; fillInputs();
+  }
+  function fillInputs(){
+    CI.days.filter(d=>d.mkey===selMonth).forEach(d=>{
+      const v=cyc.days[d.key]||{}, a=document.activeElement;
+      const t=$("t-"+d.key); if(t&&a!==t)t.value=tipoOf(d);
+      ["e1","s1","e2","s2","aj"].forEach(p=>{const el=$(p+"-"+d.key); if(el&&a!==el&&el.value!==(v[p]||""))el.value=v[p]||"";});
+    });
+    const a=document.activeElement;
+    if(a!==$("meta"))$("meta").value=(cyc.meta<0?"-":"")+hm(cyc.meta);
+    const pz=$("prazo"); pz.min=CI.startKey; pz.max=CI.endKey; if(a!==pz)pz.value=cyc.prazo||"";
+    if(a!==$("inicial"))$("inicial").value=(cyc.inicial<0?"-":"")+hm(cyc.inicial);
+    if(a!==$("tol"))$("tol").value=cfg.tol;
+    if(a!==$("alm"))$("alm").value=hm(cfg.alm||90);
+    if(a!==$("inicio"))$("inicio").value=cfg.inicio||"2026-09";
+  }
+
+  function render(){
+    const r=compute();
+    $("title").textContent="Matheus · "+CI.label;
+    $("subtitle").textContent=`Tab. 7 · 8:00/12:00/13:30/17:30 · sáb 4h · ciclo de 6 meses, fecha em ${pad(CI.end.getDate())}/${pad(CI.end.getMonth()+1)}/${CI.end.getFullYear()}`;
+    $("tolTxt").textContent=cfg.tol+" min";
+    // KPIs
+    const k=$("kSaldo"); k.textContent=sg(r.saldo); k.className="val "+cls(r.saldo);
+    const nDone=CI.days.filter(d=>r.ev[d.key].t==="trab"&&r.ev[d.key].complete&&J(d.w)>0).length;
+    $("kSaldoNote").textContent=nDone?(nDone===1?"1 dia útil lançado":`${nDone} dias úteis lançados`):(todayKey<CI.startKey?`começa em ${pad(CI.start.getDate())}/${pad(CI.start.getMonth()+1)}`:"nenhum dia lançado ainda");
+    const kp=$("kProj");
+    if(r.paceN){kp.textContent=sg(Math.round(r.proj));kp.className="val "+cls(Math.round(r.proj));$("kProjNote").textContent=`média de ${sg(Math.round(r.pace))} por dia útil (${r.paceN} dias)`;}
+    else{kp.textContent=sg(r.saldo);kp.className="val "+cls(r.saldo);$("kProjNote").textContent="aparece depois dos primeiros dias lançados";}
+    const ka=$("kAjuste");
+    if(!r.rem.length){ka.textContent="—";ka.className="val";$("kAjusteNote").textContent="sem dias úteis restantes";}
+    else if(r.need===0||r.within){ka.textContent="8:00";ka.className="val zero";$("kAjusteNote").textContent=r.within?`diferença de ${hm(r.need)} fica na tolerância`:"na meta: mantenha a jornada normal";}
+    else{
+      const first=r.rem.find(d=>r.plan[d.key]!==undefined&&d.w!==6)||r.rem[0]; const s=r.plan[first.key];
+      ka.textContent=(s>0?"−":"+")+hm(Math.abs(s));ka.className="val "+(s>0?"neg":"pos");
+      $("kAjusteNote").textContent=(s>0?"sair mais cedo":"ficar a mais")+(r.nUsed<r.rem.length?` em ${r.nUsed} dia${r.nUsed>1?"s":""}`:" por dia útil")+(r.prazo?` até ${r.prazo.slice(8)}/${r.prazo.slice(5,7)}`:"");
+    }
+    const msLeft=Math.max(0,Math.round((CI.end-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5)+1);
+    $("kDias").textContent=r.remAll.length+" dias";
+    $("kDiasNote").textContent=`úteis sem lançamento · ${msLeft} dias corridos`+(r.pastMissing?` · ${r.pastMissing} dia${r.pastMissing>1?"s":""} passado${r.pastMissing>1?"s":""} sem lançar`:"");
+    // months table
+    const maxAbs=Math.max(60,...r.months.map(m=>Math.abs(m.saldo)));
+    let mh="";
+    r.months.forEach(mo=>{
+      const w=Math.min(50,Math.abs(mo.saldo)/maxAbs*50);
+      const bar=`<span class="bar" aria-hidden="true"><b></b><i style="${mo.saldo>=0?"left:50%":"left:"+(50-w)+"%"};width:${w}%;background:var(${mo.saldo>=0?"--credit":"--debit"})"></i></span>`;
+      mh+=`<tr class="${mo.key===selMonth?"sel":""}"><td><button type="button" class="mlink" id="ml-${mo.key}">${MES[mo.m]} ${mo.y}</button></td>
+        <td>${mo.launched}/${mo.total}</td><td class="pos">${mo.cr?"+"+hm(mo.cr):"—"}</td><td class="neg">${mo.db?"−"+hm(mo.db):"—"}</td>
+        <td class="${cls(mo.saldo)}">${sg(mo.saldo)}${bar}</td><td class="${cls(mo.acc)}">${sg(mo.acc)}</td><td>${mo.falta?hm(mo.falta):"—"}</td></tr>`;
+    });
+    const tc=r.months.reduce((a,m)=>a+m.cr,0), td=r.months.reduce((a,m)=>a+m.db,0), tf=r.months.reduce((a,m)=>a+m.falta,0);
+    mh+=`<tr class="total"><td>Ciclo${cyc.inicial?` (inicial ${sg(cyc.inicial)})`:""}</td><td></td><td class="pos">${tc?"+"+hm(tc):"—"}</td><td class="neg">${td?"−"+hm(td):"—"}</td><td></td><td class="${cls(r.saldo)}">${sg(r.saldo)}</td><td>${tf?hm(tf):"—"}</td></tr>`;
+    $("mbody").innerHTML=mh;
+    // day rows
+    CI.days.filter(d=>d.mkey===selMonth).forEach(d=>{
+      const e=r.ev[d.key], st=$("st-"+d.key), row=$("row-"+d.key); if(!st)return;
+      const trab=e.t==="trab";
+      ["e1","s1","e2","s2"].forEach(p=>{const el=$(p+"-"+d.key); if(el)el.disabled=!trab;});
+      $("aj-"+d.key).hidden=e.t!=="ajuste";
+      row.className="row"+(d.key===todayKey?" today":"")+(["dsr","feriado","coberto"].includes(e.t)?" off":"");
+      let h="";
+      if(e.t==="coberto")h='<span class="x">no saldo inicial do ciclo</span>';
+      else if(e.t==="dsr")h='<span class="x">Descanso</span>';
+      else if(e.t==="feriado")h='<span class="x">Feriado · não conta</span>';
+      else if(e.t==="abon")h='<span class="chip t">0:00</span><span class="x">Abonado</span>';
+      else if(e.t==="folga")h=`<span class="chip d">−${hm(J(d.w))}</span><span class="x">Folga</span>`;
+      else if(e.t==="falta")h=`<span class="chip w">falta ${hm(J(d.w))}</span><span class="x">vai para a folha</span>`;
+      else if(e.t==="ajuste")h=e.complete?`<span class="chip ${e.delta>0?"c":e.delta<0?"d":"t"}">${sg(e.delta)}</span>`:'<span class="x">digite o valor</span>';
+      else if(e.complete){
+        const w=`<span class="x">trab. <b>${hm(e.worked)}</b></span>`;
+        h=e.delta>0?`<span class="chip c">+${hm(e.delta)}</span>${w}`:e.delta<0?`<span class="chip d">−${hm(-e.delta)}</span>${w}`:`<span class="chip t">0:00</span>${w}`;
+      } else if(d.key<r.fromKey){
+        h=`<span class="chip w">sem lançamento</span>`;
+      } else {
+        const share=r.plan[d.key]||0, T=J(d.w)-share;
+        h=`<span class="chip m">meta ${hm(T)}</span>`;
+        let exit=null,note="",extra="";
+        if(e.sat){if(e.e1!=null)exit=e.e1+T;}
+        else if(e.e1!=null){
+          if(e.s1!=null&&e.e2!=null)exit=e.e2+(T-(e.s1-e.e1));
+          else if(e.s1!=null){const alm=cfg.alm||90,volta=e.s1+alm;exit=volta+(T-(e.s1-e.e1));
+            h+=`<span class="x">voltar às <b>${clock(volta)}</b></span>`;
+            if(alm>60)extra=`<span class="x">(mínimo 1h: ${clock(e.s1+60)}, aí sair às ${clock(e.s1+60+(T-(e.s1-e.e1)))})</span>`;}
+          else{exit=e.e1+T+(cfg.alm||90);note=` (almoço ${hm(cfg.alm||90)})`;}
+        }
+        if(exit!=null)h+=`<span class="x">sair às <b>${clock(exit)}</b>${note}</span>`+extra;
+        else if(share)h+=`<span class="x">${share>0?hm(share)+" a menos":hm(-share)+" a mais"}</span>`;
+      }
+      st.innerHTML=h;
+    });
+    drawChart(r);
+    renderPlan(r);
+    renderYear();
+    if(typeof renderQuick==="function")renderQuick();
+  }
+  function renderPlan(r){
+    const alm=cfg.alm||90; $("almTxt").textContent=hm(alm);
+    const endKey=r.prazo||(()=>{const d=new Date(+r.fromKey.slice(0,4),+r.fromKey.slice(5,7)-1,+r.fromKey.slice(8)+13);const k=keyOf(d);return k<CI.endKey?k:CI.endKey;})();
+    const days=CI.days.filter(d=>d.key>=r.fromKey&&d.key<=endKey&&J(d.w)>0&&!["dsr","feriado","coberto"].includes(r.ev[d.key].t));
+    const ddmm=k=>k.slice(8)+"/"+k.slice(5,7);
+    $("planTitle").textContent=r.prazo?`Plano até ${ddmm(r.prazo)}`:"Plano dos próximos dias";
+    const falta=cyc.meta-r.saldo;
+    $("planHint").innerHTML=r.prazo
+      ? `Meta: chegar a <b>${sg(cyc.meta)}</b> até ${ddmm(r.prazo)}. Saldo agora ${sg(r.saldo)}, ${falta>0?"faltam <b>+"+hm(falta)+"</b>":falta<0?"sobram <b>"+hm(-falta)+"</b>":"já está na meta"}${r.rem.length?` em ${r.rem.length} dia${r.rem.length>1?"s":""} útei${r.rem.length>1?"s":"l"}`.replace("úteil","útil"):""}.`
+      : `Meta de saldo ${sg(cyc.meta)} no fechamento do ciclo. Para definir um prazo, escolha "Até o dia" em Ajustes.`;
+    let run=r.saldo, h="";
+    days.forEach(d=>{
+      const e=r.ev[d.key], j=J(d.w);
+      const lab=`<td>${ddmm(d.key)} <span class="x">${DOWL[d.w].slice(0,3).toLowerCase()}</span>${d.key===todayKey?' <span class="cytag">hoje</span>':""}</td>`;
+      if(e.complete){
+        // realized days are already inside r.saldo, show them without adding again
+        const chip=e.t==="folga"?`<span class="chip d">folga −${hm(j)}</span>`:e.delta>0?`<span class="chip c">+${hm(e.delta)}</span>`:e.delta<0?`<span class="chip d">−${hm(-e.delta)}</span>`:`<span class="chip t">0:00</span>`;
+        h+=`<tr>${lab}<td>${e.worked!=null?hm(e.worked)+" feito":"—"}</td><td>${e.e1!=null?clock(e.e1):"—"}</td><td>${e.s2!=null?clock(e.s2):e.s1!=null&&e.sat?clock(e.s1):"—"}</td><td>${chip}</td><td class="${cls(run)}">${sg(run)}</td></tr>`;
+        return;
+      }
+      if(e.t!=="trab"){h+=`<tr>${lab}<td colspan="5" style="text-align:left;font-family:var(--sans)" class="x">${e.t}</td></tr>`;return;}
+      const share=r.plan[d.key]||0, T=j-share; run-=share;
+      const e1=e.e1!=null?e.e1:480; let exit;
+      if(e.sat)exit=e1+T;
+      else if(e.s1!=null&&e.e2!=null)exit=e.e2+(T-(e.s1-e1));
+      else if(e.s1!=null)exit=e.s1+alm+(T-(e.s1-e1));
+      else exit=e1+T+alm;
+      const diff=-share;
+      h+=`<tr${d.key===todayKey?' class="sel"':""}>${lab}<td><b>${hm(T)}</b>${diff?` <span class="x">(${sg(diff)})</span>`:""}</td><td>${e.e1!=null?clock(e.e1):'<span class="x">08:00*</span>'}</td><td><b>${clock(exit)}</b></td><td><span class="x">a fazer</span></td><td class="${cls(run)}">${sg(run)}</td></tr>`;
+    });
+    if(!days.length)h=`<tr><td colspan="6" style="text-align:left;font-family:var(--sans)" class="x">Nenhum dia útil no período.</td></tr>`;
+    $("pbody").innerHTML=h;
+    $("planNote").textContent=r.prazo?`meta ${sg(cyc.meta)} em ${ddmm(r.prazo)}`:"";
+  }
+
+  function drawChart(r){
+    const svg=$("chart"),W=960,H=260,L=58,R=18,T=18,B=30;
+    const days=CI.days, n=days.length;
+    // real cumulative until yesterday/today
+    let run=cyc.inicial; const real=[]; const lastRealIdx=days.findIndex(d=>d.key>=r.fromKey); const cut=lastRealIdx<0?n:lastRealIdx;
+    const realPts=[{i:0,v:cyc.inicial}];
+    days.forEach((d,i)=>{const e=r.ev[d.key]; if(i<cut||(e.complete&&d.key===todayKey)){ if(e.complete)run+=e.delta; realPts.push({i:i+1,v:run}); }});
+    // include completed future days (folgas marcadas ou já lançados hoje)
+    const startI=realPts[realPts.length-1].i, startV=run;
+    let pv=startV, qv=startV; const pace=[{i:startI,v:startV}], plan=[{i:startI,v:startV}];
+    for(let i=startI;i<n;i++){const d=days[i],e=r.ev[d.key];
+      if(e.complete){pv+=e.delta;qv+=e.delta;}
+      else if(e.t==="trab"&&J(d.w)>0){pv+=r.pace;qv-=(r.plan[d.key]||0);}
+      pace.push({i:i+1,v:pv});plan.push({i:i+1,v:qv});}
+    const vals=[0,cyc.meta].concat(realPts.map(p=>p.v),pace.map(p=>p.v),plan.map(p=>p.v));
+    let mn=Math.min(...vals),mx=Math.max(...vals);
+    const span0=Math.max(60,mx-mn); const steps=[15,30,60,120,180,240,360,480,720,960,1440,2400,3600]; const step=steps.find(s=>span0/s<=5)||4800;
+    mn=Math.floor((mn-step*0.3)/step)*step; mx=Math.ceil((mx+step*0.3)/step)*step;
+    const x=i=>L+(W-L-R)*i/n, y=v=>T+(H-T-B)*(mx-v)/(mx-mn);
+    let g="";
+    for(let v=mn;v<=mx;v+=step){const yy=y(v).toFixed(1);
+      g+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="${v===0?1.5:1}" ${v===0?"":'stroke-dasharray="2 4"'}/>`;
+      g+=`<text x="${L-8}" y="${+yy+4}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="11" fill="var(--muted)">${sg(v)}</text>`;}
+    // month separators
+    days.forEach((d,i)=>{ if(d.d===1){ const xx=x(i).toFixed(1);
+      if(i>0)g+=`<line x1="${xx}" x2="${xx}" y1="${T}" y2="${H-B}" stroke="var(--line)"/>`;
+      const nextI=days.findIndex((dd,j)=>j>i&&dd.d===1); const mid=x(i+((nextI<0?n:nextI)-i)/2);
+      g+=`<text x="${mid.toFixed(1)}" y="${H-10}" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="12" font-weight="600" fill="var(--muted)">${MES3[d.m]}</text>`; }});
+    // today marker
+    const ti=days.findIndex(d=>d.key===todayKey);
+    if(ti>=0){const xx=x(ti).toFixed(1);g+=`<line x1="${xx}" x2="${xx}" y1="${T}" y2="${H-B}" stroke="var(--accent)" stroke-dasharray="3 3"/><text x="${+xx+4}" y="${T+10}" font-family="IBM Plex Sans,sans-serif" font-size="11" fill="var(--accent)">hoje</text>`;}
+    // meta marker at end
+    g+=`<circle cx="${x(n).toFixed(1)}" cy="${y(cyc.meta).toFixed(1)}" r="4" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>`;
+    const path=pts=>pts.map((p,k)=>`${k?"L":"M"}${x(p.i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+    g+=`<path d="${path(plan)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5"/>`;
+    if(r.paceN)g+=`<path d="${path(pace)}" fill="none" stroke="var(--pace)" stroke-width="2" stroke-dasharray="3 4"/>`;
+    g+=`<path d="${path(realPts)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>`;
+    const lp=realPts[realPts.length-1];
+    g+=`<circle cx="${x(lp.i).toFixed(1)}" cy="${y(lp.v).toFixed(1)}" r="5" fill="var(--accent)"/>`;
+    g+=`<text x="${Math.min(x(lp.i)+8,W-R-50).toFixed(1)}" y="${(y(lp.v)-9).toFixed(1)}" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="var(--ink)">${sg(lp.v)}</text>`;
+    if(r.paceN){const pe=pace[pace.length-1];g+=`<text x="${W-R-4}" y="${(y(pe.v)+(pe.v>=cyc.meta?-8:16)).toFixed(1)}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="var(--pace)">${sg(Math.round(pe.v))}</text>`;}
+    svg.innerHTML=g;
+  }
+
+  // ---------- year summary ----------
+  const cache={}, fetching={};
+  function cycleData(c){
+    if(c.id===CYCLES[cyIdx].id)return cyc;
+    if(cache[c.id])return cache[c.id];
+    const ls=lsGet("mt-banco-"+c.id)||seedFor(c.id); if(ls)cache[c.id]=Object.assign(blank(),ls);
+    if(db&&!fetching[c.id]){fetching[c.id]=true; db.doc("ciclos/"+c.id).get().then(s=>{ if(s.exists){const d=s.data();cache[c.id]={inicial:+d.inicial||0,meta:+d.meta||0,desde:d.desde||"",days:Object.assign({},d.days||{})};lsSet("mt-banco-"+c.id,cache[c.id]);} else cache[c.id]=cache[c.id]||blank(); renderYear(); }).catch(()=>{});}
+    return cache[c.id]||blank();
+  }
+  function monthStats(c,data,mkey){
+    const ci=cycleInfo(c); let cr=0,db_=0,falta=0,launched=0,total=0;
+    ci.days.filter(d=>d.mkey===mkey).forEach(d=>{const e=evalDay(d,data); if(J(d.w)>0&&!["dsr","feriado","coberto"].includes(e.t)){total++; if(e.complete)launched++;} if(e.complete){if(e.delta>0)cr+=e.delta;else db_-=e.delta;} falta+=e.falta;});
+    let acc=data.inicial; for(const m of ci.months){ if(m.key>mkey)break; if(m.key===mkey){acc+=cr-db_;break;} const ds=ci.days.filter(d=>d.mkey===m.key); ds.forEach(d=>{const e=evalDay(d,data); if(e.complete)acc+=e.delta;}); }
+    return{cr,db:db_,saldo:cr-db_,falta,launched,total,acc,endOfCycle:ci.months[5].key===mkey,ci};
+  }
+  function renderYear(){
+    const y=+selMonth.slice(0,4); $("yearTitle").textContent="Ano "+y;
+    let h="", tc=0, td=0, tf=0, maxAbs=60; const rows=[];
+    for(let m=1;m<=12;m++){
+      const mkey=y+"-"+pad(m); const c=CYCLES.find(cc=>cycleInfo(cc).months.some(x=>x.key===mkey));
+      if(!c){rows.push({mkey,m,none:true});continue;}
+      const st=monthStats(c,cycleData(c),mkey); rows.push({mkey,m,c,st}); maxAbs=Math.max(maxAbs,Math.abs(st.saldo));
+    }
+    rows.forEach(r=>{
+      if(r.none){h+=`<tr class="off"><td>${MES[r.m-1]}</td><td colspan="5" style="text-align:left;font-family:var(--sans)">fora do banco de horas</td></tr>`;return;}
+      const st=r.st; tc+=st.cr; td+=st.db; tf+=st.falta;
+      const w=Math.min(50,Math.abs(st.saldo)/maxAbs*50);
+      const bar=`<span class="bar" aria-hidden="true"><b></b><i style="${st.saldo>=0?"left:50%":"left:"+(50-w)+"%"};width:${w}%;background:var(${st.saldo>=0?"--credit":"--debit"})"></i></span>`;
+      const future=r.mkey>todayKey.slice(0,7)&&!st.launched;
+      const dataC=cycleData(r.c); if(dataC.desde&&r.mkey<dataC.desde.slice(0,7)){h+=`<tr class="off"><td><button type="button" class="mlink" id="yl-${r.mkey}">${MES[r.m-1]}</button>${cycleInfo(r.c).months[0].key===r.mkey?`<span class="cytag">início do ciclo</span>`:""}</td><td colspan="5" style="text-align:left;font-family:var(--sans)">sem detalhe · incluído no saldo inicial (${sg(dataC.inicial)})</td></tr>`; if(st.endOfCycle){} return;}
+      h+=`<tr class="${r.mkey===selMonth?"sel":""}${future?" off":""}"><td><button type="button" class="mlink" id="yl-${r.mkey}">${MES[r.m-1]}</button>${cycleInfo(r.c).months[0].key===r.mkey?`<span class="cytag">início do ciclo</span>`:""}</td>
+        <td class="pos">${st.cr?"+"+hm(st.cr):"—"}</td><td class="neg">${st.db?"−"+hm(st.db):"—"}</td>
+        <td class="${cls(st.saldo)}">${future?"—":sg(st.saldo)+bar}</td><td class="${future?"":cls(st.acc)}">${future?"—":sg(st.acc)}</td><td>${st.falta?hm(st.falta):"—"}</td></tr>`;
+      if(st.endOfCycle){const past=st.ci.endKey<todayKey; h+=`<tr class="fech"><td colspan="6">Fechamento do ciclo ${esc(st.ci.label)} em ${pad(st.ci.end.getDate())}/${pad(st.ci.end.getMonth()+1)}/${st.ci.end.getFullYear()}: ${past?"saldo final":"saldo até agora"} <b>${sg(st.acc)}</b></td></tr>`;}
+    });
+    h+=`<tr class="total"><td>Total do ano</td><td class="pos">${tc?"+"+hm(tc):"—"}</td><td class="neg">${td?"−"+hm(td):"—"}</td><td class="${cls(tc-td)}">${sg(tc-td)}</td><td></td><td>${tf?hm(tf):"—"}</td></tr>`;
+    $("ybody").innerHTML=h;
+    $("yearNote").textContent="saldo do ano "+sg(tc-td);
+  }
+
+  // ---------- persistence ----------
+  const LSK=()=>"mt-banco-"+CYCLES[cyIdx].id;
+  function setSave(mode,txt){$("save").className="save "+mode;$("saveTxt").textContent=txt;}
+  function lsGet(k){try{const s=localStorage.getItem(k);return s?JSON.parse(s):null}catch(e){return null}}
+  function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  function schedule(which){
+    if(which==="cyc")lsSet(LSK(),cyc); else lsSet("mt-banco-cfg",cfg);
+    const ref=which==="cyc"?cycRef:cfgRef;
+    if(!ref){setSave("local","Salvo no aparelho");return;}
+    setSave("busy","Salvando…"); clearTimeout(timers[which]); timers[which]=setTimeout(()=>flush(which),700);
+  }
+  async function flush(which){
+    timers[which]=null; if(busy[which]){timers[which]=setTimeout(()=>flush(which),400);return;}
+    busy[which]=true; const ref=which==="cyc"?cycRef:cfgRef; const body=JSON.parse(JSON.stringify(which==="cyc"?cyc:cfg));
+    try{await ref.set(body);setSave("","Salvo");}
+    catch(e){if(e&&e.code==="unavailable")timers[which]=setTimeout(()=>flush(which),900+Math.random()*900);else setSave("local","Salvo só neste navegador");}
+    finally{busy[which]=false;}
+  }
+  function subscribeCycle(){
+    if(unsub){unsub();unsub=null;}
+    if(!db){return;}
+    cycRef=db.doc("ciclos/"+CYCLES[cyIdx].id);
+    let first=true;
+    unsub=cycRef.onSnapshot(s=>{
+      if(s.metadata&&s.metadata.hasPendingWrites)return; if(timers.cyc||busy.cyc)return;
+      if(s.exists){const d=s.data();cyc={inicial:+d.inicial||0,meta:+d.meta||0,prazo:d.prazo||"",desde:d.desde||"",days:Object.assign({},d.days||{})};lsSet(LSK(),cyc);fillInputs();render();setSave("","Salvo");}
+      else if(first){ if(Object.keys(cyc.days).length||cyc.meta||cyc.inicial)schedule("cyc"); else setSave("","Pronto"); }
+      first=false;
+    },()=>setSave("local","Salvo só neste navegador"));
+  }
+  function loadCycle(){
+    CI=cycleInfo(CYCLES[cyIdx]);
+    if(!selMonth||!CI.months.some(m=>m.key===selMonth)) selMonth=(CI.months.find(mo=>todayKey.startsWith(mo.key))||CI.months[0]).key;
+    cyc=Object.assign(blank(),lsGet(LSK())||seedFor(CYCLES[cyIdx].id)||{});
+    buildTabs();buildMonths();buildDays();render();subscribeCycle();
+  }
+
+  // ---------- events ----------
+  document.addEventListener("click",ev=>{
+    const b=ev.target.closest("button"); if(!b||!b.id)return;
+    let m;
+    if(b.id==="navPrev"||b.id==="navNext"){const keys=allMonthKeys(),i=keys.indexOf(selMonth)+(b.id==="navPrev"?-1:1); if(i>=0&&i<keys.length)goTo(keys[i]); return;}
+    if(b.id==="navHoje"){goTo(todayKey.slice(0,7));return;}
+    if((m=/^yl-(\d{4}-\d{2})$/.exec(b.id))){goTo(m[1]);$("monthTitle").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});return;}
+    if((m=/^(mo|ml)-(\d{4}-\d{2})$/.exec(b.id))){selMonth=m[2];buildMonths();buildDays();render(); if(m[1]==="ml")$("monthTitle").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});}
+  });
+  $("selAno").addEventListener("change",e=>{const y=e.target.value, keys=allMonthKeys(); let k=y+"-"+selMonth.slice(5); if(!keys.includes(k))k=keys.find(x=>x.startsWith(y+"-"))||k; goTo(k);});
+  $("selMes").addEventListener("change",e=>goTo(selMonth.slice(0,4)+"-"+pad(+e.target.value)));
+  function setDay(key,field,val){const v=Object.assign({},cyc.days[key]||{});v[field]=val;cyc.days=Object.assign({},cyc.days,{[key]:v});}
+  $("days").addEventListener("change",ev=>{
+    const m=/^(t|e1|s1|e2|s2|aj)-(\d{4}-\d{2}-\d{2})$/.exec(ev.target.id); if(!m)return;
+    setDay(m[2],m[1]==="t"?"tipo":m[1],ev.target.value||""); render(); schedule("cyc");
+  });
+  $("days").addEventListener("input",ev=>{
+    const m=/^(e1|s1|e2|s2|aj)-(\d{4}-\d{2}-\d{2})$/.exec(ev.target.id); if(!m)return;
+    setDay(m[2],m[1],ev.target.value||""); render();
+  });
+  $("prazo").addEventListener("change",e=>{cyc.prazo=e.target.value||""; fillInputs(); render(); schedule("cyc");});
+  $("meta").addEventListener("change",e=>{const v=parseHM(e.target.value); if(v!=null)cyc.meta=v; fillInputs(); render(); schedule("cyc");});
+  $("inicial").addEventListener("change",e=>{const v=parseHM(e.target.value); if(v!=null)cyc.inicial=v; fillInputs(); render(); schedule("cyc");});
+  $("alm").addEventListener("change",e=>{const v=parseHM(e.target.value); if(v!=null&&v>=30&&v<=240)cfg.alm=v; fillInputs(); render(); schedule("cfg");});
+  $("inicio").addEventListener("change",e=>{const v=e.target.value; if(/^\d{4}-\d{2}$/.test(v)&&v!==cfg.inicio){cfg.inicio=v; applyInicio(); schedule("cfg");}});
+  function applyInicio(){Object.keys(cache).forEach(k=>delete cache[k]);Object.keys(fetching).forEach(k=>delete fetching[k]);CYCLES=makeCycles(cfg.inicio); cyIdx=CYCLES.findIndex(c=>{const ci=cycleInfo(c);return todayKey>=ci.startKey&&todayKey<=ci.endKey}); if(cyIdx<0)cyIdx=0; selMonth=null; loadCycle();}
+  $("tol").addEventListener("change",e=>{cfg.tol=Math.max(0,Math.min(10,parseInt(e.target.value||"0",10)||0)); fillInputs(); render(); schedule("cfg");});
+
+  // ---------- quick punch ----------
+  const SEQ={e1:"Entrada",s1:"Saída almoço",e2:"Volta almoço",s2:"Saída"};
+  function todayDay(){return CI.days.find(d=>d.key===todayKey)||null;}
+  function renderQuick(){
+    const q=$("quick"), d=todayDay();
+    const cyToday=CYCLES.findIndex(c=>{const ci=cycleInfo(c);return todayKey>=ci.startKey&&todayKey<=ci.endKey});
+    const btn=$("qPunch"), undo=$("qUndo");
+    if(!d){
+      $("qTitle").textContent="Hoje";
+      $("qPunches").innerHTML=""; $("qPunches").className="punches";
+      $("qStatus").innerHTML=cyToday<0?`<span class="x">Hoje está fora do período do banco de horas.</span>`:`<span class="x">Hoje fica em outro ciclo.</span>`;
+      btn.hidden=cyToday<0; btn.textContent="Ir para o ciclo de hoje"; btn.dataset.mode="goto"; undo.hidden=true; $("qNote").textContent=""; return;
+    }
+    const e=evalDay(d), v=cyc.days[d.key]||{}, sat=d.w===6, keys=sat?["e1","s1"]:["e1","s1","e2","s2"];
+    $("qTitle").textContent=`Hoje · ${DOWL[d.w]} ${pad(d.d)}/${pad(d.m+1)}`;
+    const next=e.t==="trab"?keys.find(k=>!v[k]):null;
+    $("qPunches").className="punches"+(sat?" sat":"");
+    $("qPunches").innerHTML=keys.map(k=>`<div class="pch ${v[k]?"":"empty"} ${k===next?"next":""}"><span>${sat&&k==="s1"?"Saída":SEQ[k]}</span><b>${v[k]||"--:--"}</b></div>`).join("");
+    const r=compute(); let h="";
+    if(e.t!=="trab"){h=`<span class="x">Hoje está marcado como <b>${({dsr:"DSR",feriado:"feriado",folga:"folga",falta:"falta",abon:"abonado",ajuste:"ajuste"})[e.t]}</b>. Troque o tipo do dia na lista abaixo se for trabalhar.</span>`;}
+    else if(e.complete){h=e.delta>0?`<span class="chip c">+${hm(e.delta)}</span>`:e.delta<0?`<span class="chip d">−${hm(-e.delta)}</span>`:`<span class="chip t">0:00</span>`; h+=`<span class="x">trabalhado <b>${hm(e.worked)}</b> · saldo do ciclo <b>${sg(r.saldo)}</b></span>`;}
+    else{
+      const share=r.plan[d.key]||0, T=J(d.w)-share; h=`<span class="chip m">meta ${hm(T)}</span>`;
+      let exit=null,note="";
+      if(sat){if(e.e1!=null)exit=e.e1+T;}
+      else if(e.e1!=null){ if(e.s1!=null&&e.e2!=null)exit=e.e2+(T-(e.s1-e.e1)); else if(e.s1!=null){exit=e.s1+90+(T-(e.s1-e.e1));note=" (almoço 1h30)";} else {exit=e.e1+T+90;note=" (almoço 1h30)";} }
+      if(exit!=null)h+=`<span class="x">sair às <b>${clock(exit)}</b>${note}</span>`;
+    }
+    $("qStatus").innerHTML=h;
+    btn.hidden=false; btn.dataset.mode="punch"; btn.disabled=!next;
+    btn.textContent=next?`Bater ${ (sat&&next==="s1"?"Saída":SEQ[next]).toLowerCase() } agora`:(e.t==="trab"?"Dia completo":"Sem batidas hoje");
+    undo.hidden=false; undo.disabled=!keys.some(k=>v[k]);
+    $("qNote").textContent=next?"":"";
+  }
+  $("qPunch").addEventListener("click",()=>{
+    const b=$("qPunch");
+    if(b.dataset.mode==="goto"){const i=CYCLES.findIndex(c=>{const ci=cycleInfo(c);return todayKey>=ci.startKey&&todayKey<=ci.endKey}); if(i>=0){cyIdx=i;selMonth=null;loadCycle();} return;}
+    const d=todayDay(); if(!d)return; const v=cyc.days[d.key]||{}; const keys=d.w===6?["e1","s1"]:["e1","s1","e2","s2"];
+    const next=keys.find(k=>!v[k]); if(!next)return;
+    const t=new Date(); setDay(d.key,next,pad(t.getHours())+":"+pad(t.getMinutes()));
+    if(selMonth!==d.mkey){selMonth=d.mkey;buildMonths();buildDays();} else fillInputs();
+    render(); schedule("cyc");
+    if(navigator.vibrate)try{navigator.vibrate(30)}catch(e){}
+  });
+  $("qUndo").addEventListener("click",()=>{
+    const d=todayDay(); if(!d)return; const v=cyc.days[d.key]||{}; const keys=d.w===6?["e1","s1"]:["e1","s1","e2","s2"];
+    const last=[...keys].reverse().find(k=>v[k]); if(!last)return;
+    setDay(d.key,last,""); fillInputs(); render(); schedule("cyc");
+  });
+
+  // ---------- backup ----------
+  $("bkExport").addEventListener("click",()=>{
+    const out={app:"banco-de-horas-matheus",versao:1,exportadoEm:new Date().toISOString(),dados:{}};
+    try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i); if(k.startsWith("mt-banco"))out.dados[k]=JSON.parse(localStorage.getItem(k));}}catch(e){}
+    const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="banco-matheus-"+todayKey+".json";
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+  });
+  $("bkImport").addEventListener("click",()=>$("bkFile").click());
+  $("bkFile").addEventListener("change",async e=>{
+    const f=e.target.files&&e.target.files[0]; if(!f)return;
+    try{const j=JSON.parse(await f.text()); if(!j||j.app!=="banco-de-horas-matheus"||!j.dados)throw 0;
+      Object.entries(j.dados).forEach(([k,v])=>{if(k.startsWith("mt-banco"))lsSet(k,v);});
+      cfg=Object.assign({tol:5,alm:90,inicio:"2026-04"},lsGet("mt-banco-cfg")||{}); applyInicio(); setSave("","Backup importado");
+    }catch(err){setSave("local","Arquivo de backup inválido");}
+    e.target.value="";
+  });
+
+  // ---------- install / service worker ----------
+  let deferredPrompt=null;
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("btnInstall").hidden=false;});
+  $("btnInstall").addEventListener("click",async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$("btnInstall").hidden=true;});
+  if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+  // refresh "today" when the app comes back to the foreground on a new day
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){const k=keyOf(new Date()); if(k!==todayKey)location.reload(); else renderQuick();}});
+
+  // ---------- boot ----------
+  cfg=Object.assign(cfg,lsGet("mt-banco-cfg")||{}); CYCLES=makeCycles(cfg.inicio); cyIdx=CYCLES.findIndex(c=>{const ci=cycleInfo(c);return todayKey>=ci.startKey&&todayKey<=ci.endKey}); if(cyIdx<0)cyIdx=0;
+  loadCycle(); setSave("local","Salvo no aparelho");
+  (async()=>{
+    try{db=window.claude&&window.claude.use?await window.claude.use("db"):null}catch(e){db=null}
+    if(!db)return;
+    cfgRef=db.doc("config/geral");
+    cfgRef.onSnapshot(s=>{ if(s.metadata&&s.metadata.hasPendingWrites)return; if(timers.cfg||busy.cfg)return;
+      if(s.exists){const d=s.data(); const prevIni=cfg.inicio; cfg={tol:typeof d.tol==="number"?d.tol:5,alm:typeof d.alm==="number"?d.alm:90,inicio:typeof d.inicio==="string"?d.inicio:"2026-04"}; lsSet("mt-banco-cfg",cfg); if(cfg.inicio!==prevIni)applyInicio(); else {fillInputs(); render();}}
+    },()=>{});
+    subscribeCycle(); renderYear();
+  })();
+})();
+</script>
+</body>
+</html>
