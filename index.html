@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Banco de Horas</title>
+<style>
+:root{--bg:#EEF1F0;--panel:#fff;--ink:#16201F;--muted:#5E6B69;--line:#D5DCDA}
+@media (prefers-color-scheme:dark){:root{--bg:#101615;--panel:#18201F;--ink:#E6ECEA;--muted:#98A5A2;--line:#2C3735}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:40px 16px}
+main{max-width:560px;margin:0 auto;display:grid;gap:16px}
+h1{font-size:30px;margin:0 0 4px}
+p{color:var(--muted);margin:0 0 8px}
+a.app{display:flex;align-items:center;gap:16px;padding:18px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:inherit;text-decoration:none}
+a.app:hover,a.app:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a.app img{width:56px;height:56px;border-radius:12px}
+a.app b{display:block;font-size:18px}
+a.app span{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <div><h1>Banco de Horas</h1><p>Escolha o seu app. Os lançamentos ficam só no seu celular.</p></div>
+  <a class="app" href="marcos/"><img src="marcos/icons/icon-192.png" alt=""><div><b>Marcos</b><span>Tab. 14 · bater ponto e acompanhar o ciclo</span></div></a>
+  <a class="app" href="matheus/"><img src="matheus/icons/icon-192.png" alt=""><div><b>Matheus</b><span>Tab. 7 · dia a dia, mês a mês e plano com meta</span></div></a>
+</main>
+</body>
+</html>
